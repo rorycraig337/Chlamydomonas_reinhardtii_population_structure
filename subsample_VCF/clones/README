@@ -1,0 +1,4 @@
+##identify SNPs between clonal isolate pairs/trios
+
+#extract raw SNPs and INDELs for clonal sets
+bash select_variants.clones.sh
