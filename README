@@ -1,4 +1,0 @@
-##extract a species-wide VCF for field isolates of chlamy, excluding clones and redundant lab isolates
-
-#extract raw SNPs and INDELs
-bash select_variants.species_wide.sh
