@@ -1,0 +1,25 @@
+##identify IBD tracts between isolates in clade JPN
+
+#extract VCF of SNPs for JPN isolates
+bash select_variants.JPN.sh
+
+#convert VCF to hmmIBD input format
+perl ../vcf_to_hmmIBD.pl --vcf JPN.snps.vcf --out JPN.hmmIBD.txt
+
+#run hmmIBD
+hmmIBD -i JPN.hmmIBD.txt -o JPN.hmmIBD.out.txt
+
+#extract IBD tracts of at least 100 kb
+perl ../extract_IBD.pl --IBD JPN.hmmIBD.out.txt --out JPN.IBD_tracts.txt --min 100000 --lengths JPN.tract_lengths.txt
+
+#convert tracks to bed format, with an isolate chosen at random from each pair
+perl ../isolate_IBD_to_bed.random.pl --IBD JPN.IBD_tracts.txt --temp temp.txt --isolates JPN.txt
+
+#sort and merge bed files
+bash sort_and_merge.JPN.sh
+
+#extract per pair cumulative lengths
+awk '{ print $1, $2 }' JPN.IBD_tracts.txt | sort -u > JPN_pairs.txt
+perl ../cumulate_IBD.pl --pairs JPN_pairs.txt --IBD JPN.IBD_tracts.txt --out JPN_cumulative_tract_lengths.txt
+sort -k3n,3n JPN_cumulative_tract_lengths.txt > s_JPN_cumulative_tract_lengths.txt
+mv s_JPN_cumulative_tract_lengths.txt JPN_cumulative_tract_lengths.txt

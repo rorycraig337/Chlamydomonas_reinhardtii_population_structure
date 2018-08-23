@@ -1,0 +1,25 @@
+##identify IBD tracts between isolates in clade NA1
+
+#extract VCF of SNPs for NA1 isolates
+bash select_variants.NA1.sh
+
+#convert VCF to hmmIBD input format
+perl ../vcf_to_hmmIBD.pl --vcf NA1.snps.vcf --out NA1.hmmIBD.txt
+
+#run hmmIBD
+hmmIBD -i NA1.hmmIBD.txt -o NA1.hmmIBD.out.txt
+
+#extract IBD tracts of at least 100 kb
+perl ../extract_IBD.pl --IBD NA1.hmmIBD.out.txt --out NA1.IBD_tracts.txt --min 100000 --lengths NA1.tract_lengths.txt
+
+#convert tracks to bed format, with an isolate chosen at random from each pair
+perl ../isolate_IBD_to_bed.random.pl --IBD NA1.IBD_tracts.txt --temp temp.txt --isolates NA1.txt
+
+#sort and merge bed files
+bash sort_and_merge.NA1.sh
+
+#extract per pair cumulative lengths
+awk '{ print $1, $2 }' NA1.IBD_tracts.txt | sort -u > NA1_pairs.txt
+perl ../cumulate_IBD.pl --pairs NA1_pairs.txt --IBD NA1.IBD_tracts.txt --out NA1_cumulative_tract_lengths.txt
+sort -k3n,3n NA1_cumulative_tract_lengths.txt > s_NA1_cumulative_tract_lengths.txt
+mv s_NA1_cumulative_tract_lengths.txt NA1_cumulative_tract_lengths.txt

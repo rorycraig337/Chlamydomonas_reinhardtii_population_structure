@@ -1,0 +1,27 @@
+##identify between population IBD tracts
+
+#run hmmIBD for each population comparison
+hmmIBD -i ../NA1/NA1.hmmIBD.txt -I ../NA2/NA2.hmmIBD.txt -o NA1-NA2.hmmIBD.out.txt
+hmmIBD -i ../NA1/NA1.hmmIBD.txt -I ../JPN/JPN.hmmIBD.txt -o NA1-JPN.hmmIBD.out.txt
+hmmIBD -i ../NA2/NA2.hmmIBD.txt -I ../JPN/JPN.hmmIBD.txt -o NA2-JPN.hmmIBD.out.txt
+
+#extract IBD tracts >100 kb
+perl ../extract_IBD.pl --IBD NA1-NA2.hmmIBD.out.txt --out NA1-NA2.IBD_tracts.txt --min 100000 --lengths NA1-NA2.tract_lengths.txt
+perl ../extract_IBD.pl --IBD NA1-JPN.hmmIBD.out.txt --out NA1-JPN.IBD_tracts.txt --min 100000 --lengths NA1-JPN.tract_lengths.txt
+perl ../extract_IBD.pl --IBD NA2-JPN.hmmIBD.out.txt --out NA2-JPN.IBD_tracts.txt --min 100000 --lengths NA2-JPN.tract_lengths.txt
+
+#extract per pair cumulative lengths
+awk '{ print $1, $2 }' NA1-NA2.IBD_tracts.txt | sort -u > NA1-NA2_pairs.txt
+perl ../cumulate_IBD.pl --pairs NA1-NA2_pairs.txt --IBD NA1-NA2.IBD_tracts.txt --out NA1-NA2_cumulative_tract_lengths.txt
+sort -k3n,3n NA1-NA2_cumulative_tract_lengths.txt > s_NA1-NA2_cumulative_tract_lengths.txt
+mv s_NA1-NA2_cumulative_tract_lengths.txt NA1-NA2_cumulative_tract_lengths.txt
+
+awk '{ print $1, $2 }' NA1-JPN.IBD_tracts.txt | sort -u > NA1-JPN_pairs.txt
+perl ../cumulate_IBD.pl --pairs NA1-JPN_pairs.txt --IBD NA1-JPN.IBD_tracts.txt --out NA1-JPN_cumulative_tract_lengths.txt
+sort -k3n,3n NA1-JPN_cumulative_tract_lengths.txt > s_NA1-JPN_cumulative_tract_lengths.txt
+mv s_NA1-JPN_cumulative_tract_lengths.txt NA1-JPN_cumulative_tract_lengths.txt
+
+awk '{ print $1, $2 }' NA2-JPN.IBD_tracts.txt | sort -u > NA2-JPN_pairs.txt
+perl ../cumulate_IBD.pl --pairs NA2-JPN_pairs.txt --IBD NA2-JPN.IBD_tracts.txt --out NA2-JPN_cumulative_tract_lengths.txt
+sort -k3n,3n NA2-JPN_cumulative_tract_lengths.txt > s_NA2-JPN_cumulative_tract_lengths.txt
+mv s_NA2-JPN_cumulative_tract_lengths.txt NA2-JPN_cumulative_tract_lengths.txt
