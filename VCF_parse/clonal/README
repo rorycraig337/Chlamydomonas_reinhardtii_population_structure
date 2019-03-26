@@ -1,0 +1,5 @@
+##identify SNPs between clonal isolate pairs/trios (or other pairwise isolates of interest)
+
+#extract all sites VCF for clonal sets
+bash select_variants.clones.sh
+gzip *vcf

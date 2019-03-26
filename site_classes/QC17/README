@@ -1,0 +1,21 @@
+##produce site class bed files for QC17 (differ due to different multi-SNP codon filter)
+
+perl ../alter_allele_counts.pl --vcf ../../QC17/QC17.snps.min_isolates.nuclear.vcf --table ../CDS_no_overlaps_table.txt --out CDS_no_overlaps_table.altered_SNPs.txt
+perl ../multi-allelic_codon_filter.pl --table CDS_no_overlaps_table.altered_SNPs.txt --out CDS_table_final.txt
+perl ../extract_CDS_degeneracy.pl --table CDS_table_final.txt
+
+cp ../3_UTR.bed .
+cp ../5_UTR.bed .
+cp ../intergenic.bed .
+cp ../introns.bed .
+cp ../NE.bed .
+cp ../genome.bed .
+
+bash sort_merge_and_filter.sh
+
+rm CDS_*table*txt
+rm ../CDS_*table*txt
+
+perl ../fai2bed.pl --fai /localdisk/data/chlamydomonas/popgen/references/chlamydomonas/5.3_chlamy_w_organelles_mt_minus/genome/chlamy.5.3.w_organelles_mtMinus.fasta.fai --out chlamy.5.3.bed6
+grep -v "mtMinus" chlamy.5.3.bed6 | grep -v "mtDNA" | grep -v "cpDNA" | grep -v "scaffold" > QC17.chromosomes.bed
+rm chlamy.5.3.bed6

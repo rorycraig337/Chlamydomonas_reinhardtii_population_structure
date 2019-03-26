@@ -1,0 +1,48 @@
+##pipeline for basic SNP filtering, based on bi-allelic sites/SNPs passing DP and GQ filters
+
+mask 5bp either side of indel for each isolate, and restore indels to invariant/SNP sites
+gunzip ../../VCF_parse/species_wide/species_wide.vcf.gz
+perl ../indel_filter_and_rescue.pl --vcf ../../VCF_parse/species_wide/species_wide.vcf --out species_wide.f1.vcf --flank 5 --suffix indel_mask.bed --mode rescue
+gzip ../../VCF_parse/species_wide/species_wide.vcf
+bash ../sort_and_merge.indels.sh
+perl ../../differentiation_divergence_analyses/mask_vcf_regions.pl --vcf species_wide.f1.vcf --samples CC1009,CC1010,CC1373,CC1952,CC2342,CC2343,CC2344,CC2931,CC2932,CC2935,CC2936,CC2937,CC2938,CC3059,CC3060,CC3061,CC3062,CC3063,CC3064,CC3065,CC3068,CC3069,CC3071,CC3073,CC3075,CC3076,CC3079,CC3082,CC3083,CC3084,CC3086,CC3268,GB117,GB119,GB123,GB13,GB138,GB141,GB57,GB66,NIES2463,NIES2464 --suffix .indel_mask.bed --out species_wide.f2.vcf
+perl ../SNP_validator.pl --vcf species_wide.f2.vcf --out species_wide.f3.vcf
+
+#mask low quality genotypes
+perl ../failed_genotype_masker_maxDP.pl --vcf species_wide.f3.vcf --GQ 20 --DP_min 3 --DP_max ../../VCF_parse/raw_coverage/nuclear_cov.txt --DP_max_int 4 --out species_wide.f4.vcf
+perl ../SNP_validator.pl --vcf species_wide.f4.vcf --out species_wide.f5.vcf
+
+#filter VCF for sites with good calls for every individual (for population structure analyses)
+perl ../prefilter_VCF_3-clades.pl --vcf species_wide.f5.vcf --pop_list ../NA1-NA2-JPN.txt --minA 27 --minB 8 --minC 2 --out all_sites.all_isolates.vcf
+
+#filter VCF for sites with good calls for 50% of isolates (for admixture profiling)
+perl ../prefilter_VCF_3-clades.pl --vcf species_wide.f5.vcf --pop_list ../NA1-NA2-JPN.txt --minA 13 --minB 4 --minC 0 --out all_sites.min_isolates_exJPN.vcf 
+
+#remove redundant lab strain CC-1009 to produce VCFs for pop gen/IBD analyses
+perl ../vcf_isolate_filter.pl --in species_wide.f5.vcf --exclude CC1009.txt --out species_wide.f5.1lab.vcf
+
+#now filter VCF for sites with >=50% of isolates per all lineages, or only for two lineages
+perl ../prefilter_VCF_3-clades.pl --vcf species_wide.f5.1lab.vcf --pop_list ../NA1-NA2-JPN.txt --minA 13 --minB 4 --minC 2 --out all_sites.min_isolates.1lab.vcf
+perl ../prefilter_VCF_3-clades.pl --vcf species_wide.f5.1lab.vcf --pop_list ../NA1-NA2-JPN.txt --minA 13 --minB 4 --minC 0 --out all_sites.min_isolates_exJPN.1lab.vcf
+perl ../prefilter_VCF_3-clades.pl --vcf species_wide.f5.1lab.vcf --pop_list ../NA1-NA2-JPN.txt --minA 13 --minB 0 --minC 2 --out all_sites.min_isolates_exNA2.1lab.vcf
+perl ../prefilter_VCF_3-clades.pl --vcf species_wide.f5.1lab.vcf --pop_list ../NA1-NA2-JPN.txt --minA 0 --minB 4 --minC 2 --out all_sites.min_isolates_exNA1.1lab.vcf
+
+#filter MT and organelle sites
+perl ../organelle_MT_filter.pl --vcf all_sites.all_isolates.vcf --mating ../MT.bed --out all_sites.all_isolates.nuclear.vcf
+perl ../organelle_MT_filter.pl --vcf all_sites.min_isolates_exJPN.vcf --mating ../MT.bed --out all_sites.min_isolates_exJPN.nuclear.vcf
+perl ../organelle_MT_filter.pl --vcf all_sites.min_isolates.1lab.vcf --mating ../MT.bed --out all_sites.min_isolates.nuclear.1lab.vcf
+perl ../organelle_MT_filter.pl --vcf all_sites.min_isolates_exJPN.1lab.vcf --mating ../MT.bed --out all_sites.min_isolates_exJPN.nuclear.1lab.vcf
+perl ../organelle_MT_filter.pl --vcf all_sites.min_isolates_exNA2.1lab.vcf --mating ../MT.bed --out all_sites.min_isolates_exNA2.nuclear.1lab.vcf
+perl ../organelle_MT_filter.pl --vcf all_sites.min_isolates_exNA1.1lab.vcf --mating ../MT.bed --out all_sites.min_isolates_exNA1.nuclear.1lab.vcf
+
+#extract SNPs
+perl ../extract_SNPs.pl --vcf all_sites.all_isolates.nuclear.vcf --out snps.all_isolates.nuclear.vcf
+perl ../extract_SNPs.pl --vcf all_sites.min_isolates_exJPN.nuclear.vcf --out snps.min_isolates_exJPN.nuclear.vcf
+perl ../extract_SNPs.pl --vcf all_sites.min_isolates.nuclear.1lab.vcf --out snps.min_isolates.nuclear.1lab.vcf
+perl ../extract_SNPs.pl --vcf all_sites.min_isolates_exJPN.nuclear.1lab.vcf --out snps.min_isolates_exJPN.nuclear.1lab.vcf
+perl ../extract_SNPs.pl --vcf all_sites.min_isolates_exNA2.nuclear.1lab.vcf --out snps.min_isolates_exNA2.nuclear.1lab.vcf
+perl ../extract_SNPs.pl --vcf all_sites.min_isolates_exNA1.nuclear.1lab.vcf --out snps.min_isolates_exNA1.nuclear.1lab.vcf
+
+#clean up directory
+rm species_wide*vcf
+rm *mask.bed

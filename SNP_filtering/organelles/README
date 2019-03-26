@@ -1,0 +1,35 @@
+##prodoce NEXUS alignment for all mitochondrial sites, and all chloroplast CDS sites
+
+#extract mitochondrial sites from VCF
+perl match_col1.pl --tsv ../species_wide/species_wide.f3.vcf --match mtDNA --out mtDNA.f3.vcf
+perl ../failed_genotype_masker_maxDP.pl --vcf mtDNA.f3.vcf --GQ 20 --DP_min 3 --DP_max ../../VCF_parse/raw_coverage/mtDNA_cov.txt --DP_max_int 4 --out mtDNA.f4.vcf
+perl ../SNP_validator.pl --vcf mtDNA.f4.vcf --out mtDNA.f5.vcf
+perl ../prefilter_VCF_3-clades.pl --vcf mtDNA.f5.vcf --pop_list ../NA1-NA2-JPN.txt --minA 27 --minB 8 --minC 2 --out mtDNA.all_isolates.vcf
+
+#convert VCF to per isolate FASTA, and combine to aligned FASTA
+perl ../../differentiation_divergence_analyses/vcf2fastas.pl --vcf mtDNA.all_isolates.vcf
+cat *fa > mtDNA.all_sites.fasta
+rm *fa
+
+#convert to NEXUS
+seqret -sequence mtDNA.all_sites.fasta -outseq mtDNA.all_sites.nexus -sformat1 FASTA -osformat2 NEXUS
+
+#extract chloroplast sites from VCF
+perl match_col1.pl --tsv ../species_wide/species_wide.f3.vcf --match cpDNA --out cpDNA.f3.vcf
+perl ../failed_genotype_masker_maxDP.pl --vcf cpDNA.f3.vcf --GQ 20 --DP_min 3 --DP_max ../../VCF_parse/raw_coverage/cpDNA_cov.txt --DP_max_int 4 --out cpDNA.f4.vcf
+perl ../SNP_validator.pl --vcf cpDNA.f4.vcf --out cpDNA.f5.vcf
+perl ../prefilter_VCF_3-clades.pl --vcf cpDNA.f5.vcf --pop_list ../NA1-NA2-JPN.txt --minA 27 --minB 8 --minC 2 --out cpDNA.all_isolates.vcf
+
+#extract CDS
+grep "cpDNA" ../../site_classes/CDS.bed > cpDNA_CDS.bed
+
+#extract chloroplast CDS sites
+bedtools intersect -a cpDNA.all_isolates.vcf -b cpDNA_CDS.bed -header > cpDNA_CDS.all_isolates.vcf
+
+#convert VCF to per isolate FASTA, and combine to aligned FASTA
+perl ../../differentiation_divergence_analyses/vcf2fastas.pl --vcf cpDNA_CDS.all_isolates.vcf
+cat *fa > cpDNA_CDS.fasta
+rm *fa
+
+#convert to NEXUS
+seqret -sequence cpDNA_CDS.fasta -outseq cpDNA_CDS.nexus -sformat1 FASTA -osformat2 NEXUS

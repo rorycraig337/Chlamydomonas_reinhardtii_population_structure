@@ -1,0 +1,18 @@
+##collect raw coverage metrics from BAMs for all isolates
+
+#get per isolate per site number of reads
+java -jar /opt/gatk/GenomeAnalysisTK.jar -T DepthOfCoverage -R /scratch/research/references/chlamydomonas/5.3_chlamy_w_organelles_mt_minus/chlamy.5.3.w_organelles_mtMinus.fasta -o all_cov -I bams.list 
+
+#extract only nuclear sequence, filter mating types, and get mean coverage for sites with >=3 reads
+grep -v "cpDNA" all_cov | grep -v "mtDNA" | grep -v "mtMinus" > nuclear_cov.tsv
+perl cov_filter.pl --cov nuclear_cov.tsv --bed MT.bed --out nuclear_cov.noMT.bed
+perl mean_coverage.pl --cov nuclear_cov.noMT.bed --DP_min 3 --out nuclear_cov.txt
+
+#repeat for organelles
+head -n1 all_cov > header.txt
+grep "cpDNA" all_cov > cpDNA_cov
+cat header.txt cpDNA_cov > cpDNA_cov.tsv
+perl mean_coverage.pl --cov cpDNA_cov.tsv --DP_min 3 --out cpDNA_cov.txt
+grep "mtDNA" all_cov > mtDNA_cov
+cat header.txt mtDNA_cov > mtDNA_cov.tsv
+perl mean_coverage.pl --cov mtDNA_cov.tsv --DP_min 3 --out mtDNA_cov.txt

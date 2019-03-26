@@ -1,0 +1,4 @@
+##perform SNP filtering on clonal pairs
+
+bash clonal_SNP_filter.sh
+gzip *vcf
