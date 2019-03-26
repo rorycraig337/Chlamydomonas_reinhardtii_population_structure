@@ -1,0 +1,54 @@
+##pipeline to call admixed windows between NA1 and NA2 based on consensus marker SNPs in each clade
+
+#subsample VCF for NA1 and NA2 including CC1009
+perl ../SNP_filtering/vcf_isolate_filter.pl --in ../SNP_filtering/species_wide/all_sites.min_isolates_exJPN.nuclear.vcf --exclude ../differentiation_divergence_analyses/JPN.txt --out NA1-NA2.all_sites.min_isolates.pre.vcf
+perl ../SNP_filtering/SNP_validator.pl --vcf NA1-NA2.all_sites.min_isolates.pre.vcf --out NA1-NA2.all_sites.min_isolates.nuclear.vcf
+perl ../SNP_filtering/extract_SNPs.pl --vcf NA1-NA2.all_sites.min_isolates.nuclear.vcf --out NA1-NA2.snps.min_isolates.nuclear.vcf
+rm *pre.vcf
+
+#make fasta of SNPs and all sites
+perl ../differentiation_divergence_analyses/vcf2fastas.pl --vcf NA1-NA2.snps.min_isolates.nuclear.vcf
+cat *fa > NA1-NA2.snps.min_isolates.nuclear.fasta
+rm *fa
+
+perl ../differentiation_divergence_analyses/vcf2fastas.pl --vcf ../differentiation_divergence_analyses/unmasked/NA1-NA2.4D.all_sites.min_isolates.1lab.vcf
+cat *fa > NA1-NA2.4D.min_isolates.nuclear.fasta
+rm *fa
+
+#create consensus file of SNPs, using SNPs masked for IBD tracts and filtered for minimum number of isolates per clade
+perl fasta2consensus.pl --clade1 ../differentiation_divergence_analyses/NA1.txt --clade2 ../differentiation_divergence_analyses/NA2.txt --fasta NA1-NA2.snps.min_isolates.nuclear.fasta --percentage 60 --out consensus.txt
+
+#pull out good markers (consensus base is different between clades)
+perl filter_identical.pl --in consensus.txt --out consensus_polymorphic.txt
+
+#add genomic positions to markers
+perl add_genomic_positions.pl --vcf NA1-NA2.snps.min_isolates.nuclear.vcf --snps consensus_polymorphic.txt --out f_consensus_polymorphic.txt
+
+#get percentage of opposite clade SNPs for each isolate per 20 kb window
+perl tally_marker_snps.pl --cladeA ../differentiation_divergence_analyses/NA1.txt --cladeB ../differentiation_divergence_analyses/NA2.txt --bed ../site_classes/20kb_windows.bed --vcf NA1-NA2.snps.min_isolates.nuclear.vcf --in f_consensus_polymorphic.txt --out 20kb.introgression.tsv
+sort -k1,1 -k2n,2n 20kb.introgression.tsv > s_20kb.introgression.tsv
+
+#fill in missing windows (those that had no markers)
+perl fill_missing_windows.pl --windows ../site_classes/20kb_windows.bed --admixture s_20kb.introgression.tsv --isolates 35 --out f_20kb.introgression.tsv
+
+#format data for R
+perl format_admixture_for_R_values.pl --isolates all_info.txt --in f_20kb.introgression.tsv --out 20kb.R.tsv
+perl format_admixture_for_R_heat.pl --isolates all.txt --isolates_new all_phylo.txt --in 20kb.R.tsv --suffix 20kb.R.csv
+
+#re-run for 20 kb windows with 4 kb slide
+perl tally_marker_snps.pl --cladeA ../differentiation_divergence_analyses/NA1.txt --cladeB ../differentiation_divergence_analyses/NA2.txt --bed ../site_classes/20kb_4kb_slide.windows.bed --vcf NA1-NA2.snps.min_isolates.nuclear.vcf --in f_consensus_polymorphic.txt --out 20kb_4kb.introgression.tsv
+sort -k1,1 -k2n,2n 20kb_4kb.introgression.tsv > s_20kb_4kb.introgression.tsv
+perl fill_missing_windows.pl --windows ../site_classes/20kb_4kb_slide.windows.bed --admixture s_20kb_4kb.introgression.tsv --isolates 35 --out f_20kb_4kb.introgression.tsv
+
+#get introgressed haplotypes for each isolate
+#joins windows that start and end with >50% opposite clade marker SNPs, and skips over a a maximum of 8 NA windows
+perl introgression_percent_to_haplotypes.pl --admixture f_20kb_4kb.introgression.tsv --isolates all.txt --flank 50 --inner 50 --NA 8 --break 0 --suffix introgressed.bed
+
+#sort and merge each bed, and filter those shorter than 5 consecutive windows
+bash sort_merge_filter.sh
+
+#calculate total bp admixed for each isolate
+perl calculate_bed_lengths.pl --isolates all.txt --suffix introgressed.bed --out admixed_totals.txt
+
+#make tree for dendrogram
+megacc -a ../population_structure/neighbour_joining/TN_NJ.mao -d NA1-NA2.all_sites.min_isolates.nuclear.fasta
