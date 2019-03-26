@@ -1,0 +1,1 @@
+ID	IBD_100kb	IBD_500kb

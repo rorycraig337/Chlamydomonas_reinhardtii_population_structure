@@ -1,0 +1,5 @@
+##calculate average sharing over all NA1 pairs per 100 kb window
+perl total_sharing_windows.pl --IBD ../NA1.IBD_tracts.100kb.txt --pairs 325 --windows ../../../site_classes/100kb_windows_chromosomes.bed --out NA1.IBD_tracts.100kb.within_genome.tsv
+perl total_sharing_windows_combine.pl --IBD ../NA1.IBD_tracts.500kb.txt --pairs 325 --windows NA1.IBD_tracts.100kb.within_genome.tsv --out temp.txt
+cat header.txt temp.txt > NA1.IBD_tracts.within_genome.tsv
+rm temp.txt

@@ -1,0 +1,45 @@
+##identify IBD tracts between isolates in clade NA2
+
+#convert VCF to hmmIBD input format
+perl ../vcf2hmmIBD.pl --vcf ../../SNP_filtering/species_wide/snps.min_isolates_exJPN.nuclear.1lab.vcf --exclude exclude_NA2.txt --out NA2.hmmIBD.pre.txt
+perl ../validate_hmmIBD.pl --in NA2.hmmIBD.pre.txt --out NA2.hmmIBD.txt
+
+#run hmmIBD
+~/software/hmmIBD/hmmIBD -i NA2.hmmIBD.txt -o NA2.hmmIBD
+
+#extract IBD tracts of at least 100 kb
+perl ../extract_IBD.pl --IBD NA2.hmmIBD.hmm.txt --out NA2.IBD_tracts.100kb.txt --min 100000 --lengths NA2.tract_lengths.txt
+perl ../extract_IBD.pl --IBD NA2.hmmIBD.hmm.txt --out NA2.IBD_tracts.500kb.txt --min 500000 --lengths NA2.tract_lengths.txt
+
+#convert tracks to bed format, with an isolate chosen at random from each pair
+perl ../isolate_IBD_to_bed.random.pl --IBD NA2.IBD_tracts.100kb.txt --temp temp.txt --isolates ../../differentiation_divergence_analyses/NA2.txt --suffix IBD.bed
+
+#sort and merge bed files
+bash ../sort_and_merge.IBD.sh
+
+#extract per pair cumulative lengths
+awk '{ print $1, $2 }' NA2.hmmIBD.hmm.txt | grep -v "sample" | sort -u > NA2_pairs_all.txt
+perl ../cumulate_IBD.pl --pairs NA2_pairs_all.txt --IBD NA2.IBD_tracts.100kb.txt --out NA2_cumulative_tract_lengths.100kb.txt
+perl ../cumulate_IBD.pl --pairs NA2_pairs_all.txt --IBD NA2.IBD_tracts.500kb.txt --out NA2_cumulative_tract_lengths.500kb.txt
+
+sort -k3n,3n NA2_cumulative_tract_lengths.100kb.txt > s_NA2_cumulative_tract_lengths.100kb.txt
+mv s_NA2_cumulative_tract_lengths.100kb.txt NA2_cumulative_tract_lengths.100kb.txt
+
+sort -k3n,3n NA2_cumulative_tract_lengths.500kb.txt > s_NA2_cumulative_tract_lengths.500kb.txt
+mv s_NA2_cumulative_tract_lengths.500kb.txt NA2_cumulative_tract_lengths.500kb.txt
+
+perl ../extract_pairs.pl --pairs NC.txt --IBD NA2_cumulative_tract_lengths.100kb.txt --out NC_cumulative.100kb.txt
+perl ../extract_pairs.pl --pairs NC.txt --IBD NA2_cumulative_tract_lengths.500kb.txt --out NC_cumulative.500kb.txt
+perl ../extract_pairs.pl --pairs NC.txt --IBD NA2.hmmIBD.hmm_fract.txt --out NC_fract.txt
+
+perl ../extract_pairs.pl --pairs nonNC.txt --IBD NA2_cumulative_tract_lengths.100kb.txt --out nonNC_cumulative.100kb.txt
+perl ../extract_pairs.pl --pairs nonNC.txt --IBD NA2_cumulative_tract_lengths.500kb.txt --out nonNC_cumulative.500kb.txt
+perl ../extract_pairs.pl --pairs nonNC.txt --IBD NA2.hmmIBD.hmm_fract.txt --out nonNC_fract.txt
+
+perl ../extract_between_pairs.pl --pairs1 NC.txt --pairs2 nonNC.txt --IBD NA2_cumulative_tract_lengths.100kb.txt --out between_cumulative.100kb.txt
+perl ../extract_between_pairs.pl --pairs1 NC.txt --pairs2 nonNC.txt --IBD NA2_cumulative_tract_lengths.500kb.txt --out between_cumulative.500kb.txt
+perl ../extract_between_pairs.pl --pairs1 NC.txt --pairs2 nonNC.txt --IBD NA2.hmmIBD.hmm_fract.txt --out between_fract.txt
+
+cat nonNC_cumulative.100kb.txt between_cumulative.100kb.txt > non-withinNC_cumulative.100kb.txt
+cat nonNC_cumulative.500kb.txt between_cumulative.500kb.txt > non-withinNC_cumulative.500kb.txt
+cat nonNC_fract.txt between_fract.txt > non-withinNC_fract.txt

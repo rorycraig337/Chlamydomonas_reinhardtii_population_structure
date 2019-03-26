@@ -1,0 +1,74 @@
+##identify IBD tracts between isolates in clade NA1
+
+#convert VCF to hmmIBD input format
+perl ../vcf2hmmIBD.pl --vcf ../../SNP_filtering/species_wide/snps.min_isolates_exJPN.nuclear.1lab.vcf --exclude exclude_NA1.txt --out NA1.hmmIBD.pre.txt
+perl ../validate_hmmIBD.pl --in NA1.hmmIBD.pre.txt --out NA1.hmmIBD.txt
+
+#run hmmIBD
+~/software/hmmIBD/hmmIBD -i NA1.hmmIBD.txt -o NA1.hmmIBD
+
+#extract IBD tracts of at least 100 kb
+perl ../extract_IBD.pl --IBD NA1.hmmIBD.hmm.txt --out NA1.IBD_tracts.100kb.txt --min 100000 --lengths NA1.tract_lengths.txt
+perl ../extract_IBD.pl --IBD NA1.hmmIBD.hmm.txt --out NA1.IBD_tracts.500kb.txt --min 500000 --lengths NA1.tract_lengths.txt
+
+#convert tracks to bed format, with an isolate chosen at random from each pair
+perl ../isolate_IBD_to_bed.random.pl --IBD NA1.IBD_tracts.100kb.txt --temp temp.txt --isolates ../../differentiation_divergence_analyses/NA1.txt --suffix IBD.bed
+
+#sort and merge bed files
+bash ../sort_and_merge.IBD.sh
+
+#extract per pair cumulative lengths
+awk '{ print $1, $2 }' NA1.hmmIBD.hmm.txt | grep -v "sample" | sort -u > NA1_pairs_all.txt
+perl ../cumulate_IBD.pl --pairs NA1_pairs_all.txt --IBD NA1.IBD_tracts.100kb.txt --out NA1_cumulative_tract_lengths.100kb.txt
+sort -k3n,3n NA1_cumulative_tract_lengths.100kb.txt > s_NA1_cumulative_tract_lengths.100kb.txt
+mv s_NA1_cumulative_tract_lengths.100kb.txt NA1_cumulative_tract_lengths.100kb.txt
+perl ../cumulate_IBD.pl --pairs NA1_pairs_all.txt --IBD NA1.IBD_tracts.500kb.txt --out NA1_cumulative_tract_lengths.500kb.txt
+sort -k3n,3n NA1_cumulative_tract_lengths.500kb.txt > s_NA1_cumulative_tract_lengths.500kb.txt
+mv s_NA1_cumulative_tract_lengths.500kb.txt NA1_cumulative_tract_lengths.500kb.txt
+
+#extract IBD for each site, and betweeen sites etc.
+perl ../extract_pairs.pl --pairs Farnham_93_94.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out Farnham_93_94_cumulative.txt
+perl ../extract_pairs.pl --pairs Farnham_2016.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out Farnham_2016_cumulative.txt
+perl ../extract_pairs.pl --pairs MacDonald.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out MacDonald_cumulative.txt
+perl ../extract_pairs.pl --pairs MA.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out MA_cumulative.txt
+perl ../extract_pairs.pl --pairs QC.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out QC_cumulative.txt
+perl ../extract_pairs.pl --pairs Farnham.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out Farnham_cumulative.txt
+perl ../extract_between_pairs.pl --pairs1 MA.txt --pairs2 QC.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out MA_QC_cumulative.txt
+perl ../extract_between_pairs.pl --pairs1 Farnham_93_94.txt --pairs2 Farnham_2016.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out Farnham_Farnham_cumulative.txt
+perl ../extract_between_pairs.pl --pairs1 Farnham_93_94.txt --pairs2 MacDonald.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out Farnham_MacDonald_cumulative.txt
+perl ../extract_between_pairs.pl --pairs1 MA.txt --pairs2 QC.txt --IBD NA1_cumulative_tract_lengths.100kb.txt --out between_MA_QC_cumulative.txt
+cat MA_cumulative.txt QC_cumulative.txt > within_MA_QC_cumulative.txt
+cat Farnham_93_94_cumulative.txt MacDonald_cumulative.txt > within_field_cumulative.txt
+cat Farnham_93_94_cumulative.txt Farnham_2016_cumulative.txt > within_time_cumulative.txt
+cat ../NA2/NA2_cumulative_tract_lengths.100kb.txt NA1_cumulative_tract_lengths.100kb.txt > within_lineage_cumulative.txt
+
+perl ../extract_pairs.pl --pairs Farnham_93_94.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out Farnham_93_94_cumulative.500kb.txt
+perl ../extract_pairs.pl --pairs Farnham_2016.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out Farnham_2016_cumulative.500kb.txt
+perl ../extract_pairs.pl --pairs MacDonald.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out MacDonald_cumulative.500kb.txt
+perl ../extract_pairs.pl --pairs MA.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out MA_cumulative.500kb.txt
+perl ../extract_pairs.pl --pairs QC.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out QC_cumulative.500kb.txt
+perl ../extract_pairs.pl --pairs Farnham.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out Farnham_cumulative.500kb.txt
+perl ../extract_between_pairs.pl --pairs1 MA.txt --pairs2 QC.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out MA_QC_cumulative.500kb.txt
+perl ../extract_between_pairs.pl --pairs1 Farnham_93_94.txt --pairs2 Farnham_2016.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out Farnham_Farnham_cumulative.500kb.txt
+perl ../extract_between_pairs.pl --pairs1 Farnham_93_94.txt --pairs2 MacDonald.txt --IBD NA1_cumulative_tract_lengths.500kb.txt --out Farnham_MacDonald_cumulative.500kb.txt
+cat MA_cumulative.500kb.txt QC_cumulative.500kb.txt > within_MA_QC_cumulative.500kb.txt
+cat Farnham_93_94_cumulative.500kb.txt MacDonald_cumulative.500kb.txt > within_field_cumulative.500kb.txt
+cat Farnham_93_94_cumulative.500kb.txt Farnham_2016_cumulative.500kb.txt > within_time_cumulative.500kb.txt
+cat ../NA2/NA2_cumulative_tract_lengths.500kb.txt NA1_cumulative_tract_lengths.500kb.txt > within_lineage_cumulative.500kb.txt
+
+perl ../extract_pairs.pl --pairs Farnham_93_94.txt --IBD NA1.hmmIBD.hmm_fract.txt --out Farnham_93_94_fract.txt
+perl ../extract_pairs.pl --pairs Farnham_2016.txt --IBD NA1.hmmIBD.hmm_fract.txt --out Farnham_2016_fract.txt
+perl ../extract_pairs.pl --pairs MacDonald.txt --IBD NA1.hmmIBD.hmm_fract.txt --out MacDonald_fract.txt
+perl ../extract_pairs.pl --pairs MA.txt --IBD NA1.hmmIBD.hmm_fract.txt --out MA_fract.txt
+perl ../extract_pairs.pl --pairs QC.txt --IBD NA1.hmmIBD.hmm_fract.txt --out QC_fract.txt
+perl ../extract_pairs.pl --pairs Farnham.txt --IBD NA1.hmmIBD.hmm_fract.txt --out Farnham_fract.txt
+perl ../extract_between_pairs.pl --pairs1 MA.txt --pairs2 QC.txt --IBD NA1.hmmIBD.hmm_fract.txt --out MA_QC_fract.txt
+perl ../extract_between_pairs.pl --pairs1 Farnham_93_94.txt --pairs2 Farnham_2016.txt --IBD NA1.hmmIBD.hmm_fract.txt --out Farnham_Farnham_fract.txt
+perl ../extract_between_pairs.pl --pairs1 Farnham_93_94.txt --pairs2 MacDonald.txt --IBD NA1.hmmIBD.hmm_fract.txt --out Farnham_MacDonald_fract.txt
+
+
+perl combine_IBD.pl --pairs NA1_pairs_all.txt --fract NA1.hmmIBD.hmm_fract.txt --one NA1_cumulative_tract_lengths.100kb.txt --five NA1_cumulative_tract_lengths.500kb.txt --out NA1_IBD_summary.txt
+
+perl cohort_average_IBD.pl --lineage ../../differentiation_divergence_analyses/NA1.1lab.txt --IBD NA1.IBD_tracts.100kb.txt --genome 106481163 --out NA1_cohort_average.txt
+
+perl combine_IBD_summary.pl --tract1 within_genome_variation/100kb_IBD.100kb_tracts.tsv --tract2 within_genome_variation/100kb_IBD.500kb_tracts.tsv --out_copies NA1_copies.tsv --out_tracts NA1_tract_diversity.tsv
