@@ -1,0 +1,23 @@
+##calculate basic popgen stats (pi, theta, Tajima's D), Fst and dxy, and fixed/private/shared SNPs, for between clade comparisons
+
+#mask VCF for introgressed windows
+cp ../../admixture_profiling/*.introgressed.bed .
+rm CC1009.introgressed.bed
+perl ../mask_vcf_regions.pl --vcf ../unmasked/NA1-NA2.all_sites.min_isolates.nuclear.1lab.vcf --samples CC1009,CC1010,CC1373,CC1952,CC2342,CC2343,CC2344,CC2931,CC2932,CC2935,CC2936,CC2937,CC2938,CC3059,CC3060,CC3061,CC3062,CC3063,CC3064,CC3065,CC3068,CC3069,CC3071,CC3073,CC3075,CC3076,CC3079,CC3082,CC3083,CC3084,CC3086,CC3268,GB117,GB119,GB123,GB13,GB138,GB141,GB57,GB66,NIES2463,NIES2464 --suffix .introgressed.bed --out introgression_masked.all_sites.min_isolates.pre.vcf
+perl ../../SNP_filtering/prefilter_VCF.pl --vcf introgression_masked.all_sites.min_isolates.pre.vcf --pop_list ../NA1-NA2.txt --minA 13 --minB 4 --out introgression_masked.all_sites.min_isolates.vcf
+perl ../../SNP_filtering/extract_SNPs.pl --vcf introgression_masked.all_sites.min_isolates.vcf --out introgression_masked.snps.min_isolates.vcf
+
+
+#subsample VCFs for 4D and NE sites
+bedtools intersect -a introgression_masked.snps.min_isolates.vcf -b ../../site_classes/4D.bed -header > introgression_masked.4D.snps.min_isolates.vcf
+bedtools intersect -a introgression_masked.snps.min_isolates.vcf -b ../../site_classes/NE.bed -header > introgression_masked.NE.snps.min_isolates.vcf
+bedtools intersect -a introgression_masked.all_sites.min_isolates.vcf -b ../../site_classes/4D.bed -header > introgression_masked.4D.all_sites.min_isolates.vcf
+bedtools intersect -a introgression_masked.all_sites.min_isolates.vcf -b ../../site_classes/NE.bed -header > introgression_masked.NE.all_sites.min_isolates.vcf
+
+#get genome-wide popgen
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed introgression_masked.all_sites.min_isolates.vcf introgression_masked.genome --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,NA2 --pop_list ../NA1-NA2.txt --min_copies 13,4 --max_copies 26,8
+
+#get neutral popgen
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed introgression_masked.4D.all_sites.min_isolates.vcf introgression_masked.4D --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,NA2 --pop_list ../NA1-NA2.txt --min_copies 13,4 --max_copies 26,8
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed introgression_masked.NE.all_sites.min_isolates.vcf introgression_masked.NE --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,NA2 --pop_list ../NA1-NA2.txt --min_copies 13,4 --max_copies 26,8
+

@@ -1,0 +1,44 @@
+##compute overall genetic diversity for species-wide sample, and per lineage diversity
+
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed ../../SNP_filtering/species_wide/all_sites.min_isolates.1lab.vcf all_sites.min_isolates.1lab.genome --input_format vcf --bed_format BED3 --mode overall --output pi --max_copies 36 --min_copies 19
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed ../../SNP_filtering/species_wide/all_sites.min_isolates.1lab.vcf all_sites.min_isolates.1lab.4D --input_format vcf --bed_format BED3 --mode overall --output pi --max_copies 36 --min_copies 19
+perl ../chlamy_popgen.pl ../../site_classes/0D.bed ../../SNP_filtering/species_wide/all_sites.min_isolates.1lab.vcf all_sites.min_isolates.1lab.0D --input_format vcf --bed_format BED3 --mode overall --output pi --max_copies 36 --min_copies 19
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed ../../SNP_filtering/species_wide/all_sites.min_isolates.1lab.vcf all_sites.min_isolates.1lab.NE --input_format vcf --bed_format BED3 --mode overall --output pi --max_copies 36 --min_copies 19
+
+##calculate basic popgen stats (pi, theta, Tajima's D), Fst and dxy, and fixed/private/shared SNPs, for between clade comparisons
+
+#subsample VCF for each clade pair
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in ../../SNP_filtering/species_wide/all_sites.min_isolates.nuclear.1lab.vcf --exclude ../JPN.txt --out NA1.all_sites.min_isolates.1lab.pre1.vcf
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in NA1.all_sites.min_isolates.1lab.pre1.vcf --exclude ../NA2.txt --out NA1.all_sites.min_isolates.1lab.pre2.vcf
+perl ../../SNP_filtering/SNP_validator.pl --vcf NA1.all_sites.min_isolates.1lab.pre2.vcf --out NA1.all_sites.min_isolates.nuclear.1lab.vcf
+
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in ../../SNP_filtering/species_wide/all_sites.min_isolates.nuclear.1lab.vcf --exclude ../JPN.txt --out NA2.all_sites.min_isolates.1lab.pre1.vcf
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in NA2.all_sites.min_isolates.1lab.pre1.vcf --exclude ../NA1.txt --out NA2.all_sites.min_isolates.1lab.pre2.vcf
+perl ../../SNP_filtering/SNP_validator.pl --vcf NA2.all_sites.min_isolates.1lab.pre2.vcf --out NA2.all_sites.min_isolates.nuclear.1lab.vcf
+
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in ../../SNP_filtering/species_wide/all_sites.min_isolates.nuclear.1lab.vcf --exclude ../NA1.txt --out JPN.all_sites.min_isolates.1lab.pre1.vcf
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in JPN.all_sites.min_isolates.1lab.pre1.vcf --exclude ../NA2.txt --out JPN.all_sites.min_isolates.1lab.pre2.vcf
+perl ../../SNP_filtering/SNP_validator.pl --vcf JPN.all_sites.min_isolates.1lab.pre2.vcf --out JPN.all_sites.min_isolates.nuclear.1lab.vcf
+
+rm *pre*.vcf
+
+#subsample all VCFs for neutral sites
+bedtools intersect -a NA1.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA1.4D.all_sites.min_isolates.1lab.vcf
+bedtools intersect -a NA1.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA1.NE.all_sites.min_isolates.1lab.vcf
+bedtools intersect -a NA2.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA2.4D.all_sites.min_isolates.1lab.vcf
+bedtools intersect -a NA2.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA2.NE.all_sites.min_isolates.1lab.vcf
+bedtools intersect -a JPN.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > JPN.4D.all_sites.min_isolates.1lab.vcf
+bedtools intersect -a JPN.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > JPN.NE.all_sites.min_isolates.1lab.vcf
+
+#get genome-wide popgen
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed NA1.all_sites.min_isolates.nuclear.1lab.vcf NA1.genome --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD --min_copies 13 --max_copies 26
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed NA2.all_sites.min_isolates.nuclear.1lab.vcf NA2.genome --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD --min_copies 4 --max_copies 8
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed JPN.all_sites.min_isolates.nuclear.1lab.vcf JPN.genome --input_format vcf --bed_format BED3 --mode overall --output pi,theta --min_copies 2 --max_copies 2
+
+#get neutral popgen
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed NA1.4D.all_sites.min_isolates.1lab.vcf NA1.4D --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD --min_copies 13 --max_copies 26
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed NA1.NE.all_sites.min_isolates.1lab.vcf NA1.NE --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD --min_copies 13 --max_copies 26
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed NA2.4D.all_sites.min_isolates.1lab.vcf NA2.4D --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD --min_copies 4 --max_copies 8
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed NA2.NE.all_sites.min_isolates.1lab.vcf NA2.NE --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD --min_copies 4 --max_copies 8
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed JPN.4D.all_sites.min_isolates.1lab.vcf JPN.4D --input_format vcf --bed_format BED3 --mode overall --output pi,theta --min_copies 2 --max_copies 2
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed JPN.NE.all_sites.min_isolates.1lab.vcf JPN.NE --input_format vcf --bed_format BED3 --mode overall --output pi,theta --min_copies 2 --max_copies 2

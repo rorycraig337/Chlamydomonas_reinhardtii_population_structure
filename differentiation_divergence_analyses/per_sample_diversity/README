@@ -1,0 +1,4 @@
+##calculate diversity for each set of isolates used in IBD analyses
+
+#subsample VCF for each set and get diversity
+bash per_sample_diversity.sh

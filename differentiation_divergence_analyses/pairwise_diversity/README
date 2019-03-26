@@ -1,0 +1,38 @@
+##calculate pairwise diversity for JPN isolates and a low and high IBD pair of QC isolates
+
+#filter VCF to contain only pairs of interest
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in ../../SNP_filtering/species_wide/all_sites.min_isolates.nuclear.1lab.vcf --exclude custom.txt --out pairs.all_sites.min_isolates.pre.vcf
+perl ../../SNP_filtering/SNP_validator.pl --vcf pairs.all_sites.min_isolates.pre.vcf --out pairs.all_sites.min_isolates.vcf
+perl ../../SNP_filtering/extract_SNPs.pl --vcf pairs.all_sites.min_isolates.vcf --out pairs.snps.min_isolates.vcf
+
+#tally number of SNPs per 100 kb window
+perl tally_window_snps.pl --windows ../../site_classes/100kb_windows_chromosomes.bed --vcf pairs.snps.min_isolates.vcf --out 100kb.SNP_density.pairs_min_isolates.tsv
+
+#produce per pair VCF
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in pairs.all_sites.min_isolates.vcf --exclude ex_JPN.txt --out JPN.all_sites.min_isolates.pre.vcf
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in pairs.all_sites.min_isolates.vcf --exclude ex_av.txt --out av.all_sites.min_isolates.pre.vcf
+perl ../../SNP_filtering/vcf_isolate_filter.pl --in pairs.all_sites.min_isolates.vcf --exclude ex_high.txt --out high.all_sites.min_isolates.pre.vcf
+perl ../../SNP_filtering/SNP_validator.pl --vcf JPN.all_sites.min_isolates.pre.vcf --out JPN.all_sites.min_isolates.vcf
+perl ../../SNP_filtering/SNP_validator.pl --vcf av.all_sites.min_isolates.pre.vcf --out av.all_sites.min_isolates.vcf
+perl ../../SNP_filtering/SNP_validator.pl --vcf high.all_sites.min_isolates.pre.vcf --out high.all_sites.min_isolates.vcf
+
+#prepare SNP files for calculating diversity
+perl vcf_to_alleles_pairwise.pl --vcf JPN.all_sites.min_isolates.vcf --mode all --prefix JPN
+perl vcf_to_alleles_pairwise.pl --vcf high.all_sites.min_isolates.vcf --mode all --prefix high
+perl vcf_to_alleles_pairwise.pl --vcf av.all_sites.min_isolates.vcf --mode all --prefix av
+
+#calculate diversity
+perl ../chlamy_popgen.pl ../../site_classes/100kb_windows_chromosomes.bed JPN.tsv JPN.100kb --bed_format BED6 --mode feature --output pi --max_copies 2 --min_copies 2 --features by_line
+perl ../chlamy_popgen.pl ../../site_classes/100kb_windows_chromosomes.bed high.tsv high.100kb --bed_format BED6 --mode feature --output pi --max_copies 2 --min_copies 2 --features by_line
+perl ../chlamy_popgen.pl ../../site_classes/100kb_windows_chromosomes.bed av.tsv av.100kb --bed_format BED6 --mode feature --output pi --max_copies 2 --min_copies 2 --features by_line
+
+#filter out windows with less than 10 SNPs
+sort -k1,1 -k2n,2n JPN.100kb.per_feature.txt > s_JPN.100kb.per_feature.txt
+sort -k1,1 -k2n,2n high.100kb.per_feature.txt > s_high.100kb.per_feature.txt
+sort -k1,1 -k2n,2n av.100kb.per_feature.txt > s_av.100kb.per_feature.txt
+perl filter_snp_density.pl --density 100kb.SNP_density.pairs_min_isolates.tsv --min_SNP 10 --in s_JPN.100kb.per_feature.txt --out JPN.100kb.per_feature.txt
+perl filter_snp_density.pl --density 100kb.SNP_density.pairs_min_isolates.tsv --min_SNP 10 --in s_high.100kb.per_feature.txt --out high.100kb.per_feature.txt
+perl filter_snp_density.pl --density 100kb.SNP_density.pairs_min_isolates.tsv --min_SNP 10 --in s_av.100kb.per_feature.txt --out av.100kb.per_feature.txt
+
+rm s_*100kb*txt
+rm *pre.vcf

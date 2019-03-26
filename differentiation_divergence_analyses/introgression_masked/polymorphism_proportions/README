@@ -1,0 +1,28 @@
+##caluclate proportion of fixed, private and shared SNPs - genome, 4D and NE
+
+#for genome-wide
+#convert SNPs VCF to FASTA 
+perl ../../vcf2fastas.pl --vcf ../introgression_masked.snps.min_isolates.vcf
+cat *fa > introgression_masked.snps.min_isolates.fasta
+rm *fa
+
+#calculate proportions
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../NA2.txt --minA 13 --minB 4 --fasta introgression_masked.snps.min_isolates.fasta --out introgression_masked.snps.min_isolates --mode detailed
+
+#for 4D
+#convert SNPs VCF to FASTA 
+perl ../../vcf2fastas.pl --vcf ../introgression_masked.4D.snps.min_isolates.vcf
+cat *fa > introgression_masked.4D.snps.min_isolates.fasta
+rm *fa
+
+#calculate proportions
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../NA2.txt --minA 13 --minB 4 --fasta introgression_masked.4D.snps.min_isolates.fasta --out introgression_masked.4D.snps.min_isolates --mode detailed
+
+#for NE
+#convert SNPs VCF to FASTA 
+perl ../../vcf2fastas.pl --vcf ../introgression_masked.NE.snps.min_isolates.vcf
+cat *fa > introgression_masked.NE.snps.min_isolates.fasta
+rm *fa
+
+#calculate proportions
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../NA2.txt --minA 13 --minB 4 --fasta introgression_masked.NE.snps.min_isolates.fasta --out introgression_masked.4D.snps.min_isolates --mode detailed

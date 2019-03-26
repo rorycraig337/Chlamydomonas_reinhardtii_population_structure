@@ -1,0 +1,46 @@
+##calculate basic popgen stats (pi, theta, Tajima's D), Fst and dxy, and fixed/private/shared SNPs, for between clade comparisons
+
+#subsample VCF for each clade pair
+#perl ../../SNP_filtering/vcf_isolate_filter.pl --in ../../SNP_filtering/species_wide/all_sites.min_isolates_exJPN.nuclear.1lab.vcf --exclude ../JPN.txt --out NA1-NA2.all_sites.min_isolates.1lab.pre.vcf
+#perl ../../SNP_filtering/SNP_validator.pl --vcf NA1-NA2.all_sites.min_isolates.1lab.pre.vcf --out NA1-NA2.all_sites.min_isolates.nuclear.1lab.vcf
+#perl ../../SNP_filtering/extract_SNPs.pl --vcf NA1-NA2.all_sites.min_isolates.nuclear.1lab.vcf --out NA1-NA2.snps.min_isolates.nuclear.1lab.vcf
+
+#perl ../../SNP_filtering/vcf_isolate_filter.pl --in ../../SNP_filtering/species_wide/all_sites.min_isolates_exNA2.nuclear.1lab.vcf --exclude ../NA2.txt --out NA1-JPN.all_sites.min_isolates.1lab.pre.vcf
+#perl ../../SNP_filtering/SNP_validator.pl --vcf NA1-JPN.all_sites.min_isolates.1lab.pre.vcf --out NA1-JPN.all_sites.min_isolates.nuclear.1lab.vcf
+#perl ../../SNP_filtering/extract_SNPs.pl --vcf NA1-JPN.all_sites.min_isolates.nuclear.1lab.vcf --out NA1-JPN.snps.min_isolates.nuclear.1lab.vcf
+
+#perl ../../SNP_filtering/vcf_isolate_filter.pl --in ../../SNP_filtering/species_wide/all_sites.min_isolates_exNA1.nuclear.1lab.vcf --exclude ../NA1.txt --out NA2-JPN.all_sites.min_isolates.1lab.pre.vcf
+#perl ../../SNP_filtering/SNP_validator.pl --vcf NA2-JPN.all_sites.min_isolates.1lab.pre.vcf --out NA2-JPN.all_sites.min_isolates.nuclear.1lab.vcf
+#perl ../../SNP_filtering/extract_SNPs.pl --vcf NA2-JPN.all_sites.min_isolates.nuclear.1lab.vcf --out NA2-JPN.snps.min_isolates.nuclear.1lab.vcf
+
+rm *pre.vcf
+
+#subsample all VCFs for neutral sites
+#bedtools intersect -a NA1-NA2.snps.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA1-NA2.4D.snps.min_isolates.1lab.vcf
+#bedtools intersect -a NA1-NA2.snps.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA1-NA2.NE.snps.min_isolates.1lab.vcf
+#bedtools intersect -a NA1-NA2.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA1-NA2.4D.all_sites.min_isolates.1lab.vcf
+#bedtools intersect -a NA1-NA2.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA1-NA2.NE.all_sites.min_isolates.1lab.vcf
+
+#bedtools intersect -a NA1-JPN.snps.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA1-JPN.4D.snps.min_isolates.1lab.vcf
+#bedtools intersect -a NA1-JPN.snps.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA1-JPN.NE.snps.min_isolates.1lab.vcf
+#bedtools intersect -a NA1-JPN.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA1-JPN.4D.all_sites.min_isolates.1lab.vcf
+#bedtools intersect -a NA1-JPN.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA1-JPN.NE.all_sites.min_isolates.1lab.vcf
+
+#bedtools intersect -a NA2-JPN.snps.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA2-JPN.4D.snps.min_isolates.1lab.vcf
+#bedtools intersect -a NA2-JPN.snps.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA2-JPN.NE.snps.min_isolates.1lab.vcf
+#bedtools intersect -a NA2-JPN.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/4D.bed -header > NA2-JPN.4D.all_sites.min_isolates.1lab.vcf
+#bedtools intersect -a NA2-JPN.all_sites.min_isolates.nuclear.1lab.vcf -b ../../site_classes/NE.bed -header > NA2-JPN.NE.all_sites.min_isolates.1lab.vcf
+
+#get genome-wide popgen
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed NA1-NA2.all_sites.min_isolates.nuclear.1lab.vcf NA1-NA2.genome --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,NA2 --pop_list ../NA1-NA2.txt --min_copies 13,4 --max_copies 26,8
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed NA1-JPN.all_sites.min_isolates.nuclear.1lab.vcf NA1-JPN.genome --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,JPN --pop_list ../NA1-JPN.txt --min_copies 13,2 --max_copies 26,2
+perl ../chlamy_popgen.pl ../../site_classes/genome.bed NA2-JPN.all_sites.min_isolates.nuclear.1lab.vcf NA2-JPN.genome --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA2,JPN --pop_list ../NA2-JPN.txt --min_copies 4,2 --max_copies 8,2
+
+#get neutral popgen
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed NA1-NA2.4D.all_sites.min_isolates.1lab.vcf NA1-NA2.4D --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,NA2 --pop_list ../NA1-NA2.txt --min_copies 13,4 --max_copies 26,8
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed NA1-NA2.NE.all_sites.min_isolates.1lab.vcf NA1-NA2.NE --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,NA2 --pop_list ../NA1-NA2.txt --min_copies 13,4 --max_copies 26,8
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed NA1-JPN.4D.all_sites.min_isolates.1lab.vcf NA1-JPN.4D --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,JPN --pop_list ../NA1-JPN.txt --min_copies 13,2 --max_copies 26,2
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed NA1-JPN.NE.all_sites.min_isolates.1lab.vcf NA1-JPN.NE --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA1,JPN --pop_list ../NA1-JPN.txt --min_copies 13,2 --max_copies 26,2
+perl ../chlamy_popgen.pl ../../site_classes/4D.bed NA2-JPN.4D.all_sites.min_isolates.1lab.vcf NA2-JPN.4D --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA2,JPN --pop_list ../NA2-JPN.txt --min_copies 4,2 --max_copies 8,2
+perl ../chlamy_popgen.pl ../../site_classes/NE.bed NA2-JPN.NE.all_sites.min_isolates.1lab.vcf NA2-JPN.NE --input_format vcf --bed_format BED3 --mode overall --output pi,theta,TajD,folded-SFS,Fst,dxy --populations 2 --pop_names NA2,JPN --pop_list ../NA2-JPN.txt --min_copies 4,2 --max_copies 8,2
+

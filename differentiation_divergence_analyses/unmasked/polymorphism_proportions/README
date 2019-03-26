@@ -1,0 +1,58 @@
+##caluclate proportion of fixed, private and shared SNPs - genome, 4D and NE
+
+#for genome-wide
+#convert SNPs VCF to FASTA 
+perl ../../vcf2fastas.pl --vcf ../NA1-NA2.snps.min_isolates.nuclear.1lab.vcf
+cat *fa > NA1-NA2.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+perl ../../vcf2fastas.pl --vcf ../NA1-JPN.snps.min_isolates.nuclear.1lab.vcf
+cat *fa > NA1-JPN.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+perl ../../vcf2fastas.pl --vcf ../NA2-JPN.snps.min_isolates.nuclear.1lab.vcf
+cat *fa > NA2-JPN.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+#calculate proportions
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../NA2.txt --minA 13 --minB 4 --fasta NA1-NA2.snps.min_isolates.nuclear.1lab.fasta --out NA1-NA2.snps.min_sites_isolates.nuclear --mode detailed
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../JPN.txt --minA 13 --minB 2 --fasta NA1-JPN.snps.min_isolates.nuclear.1lab.fasta --out NA1-JPN.snps.min_sites_isolates.nuclear --mode detailed
+perl ../../polymorphism_proportions.pl --clade1 ../../NA2.txt --clade2 ../../JPN.txt --minA 4 --minB 2 --fasta NA2-JPN.snps.min_isolates.nuclear.1lab.fasta --out NA2-JPN.snps.min_sites_isolates.nuclear --mode detailed
+
+#for 4D
+#convert SNPs VCF to FASTA 
+perl ../../vcf2fastas.pl --vcf ../NA1-NA2.4D.snps.min_isolates.1lab.vcf
+cat *fa > NA1-NA2.4D.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+perl ../../vcf2fastas.pl --vcf ../NA1-JPN.4D.snps.min_isolates.1lab.vcf
+cat *fa > NA1-JPN.4D.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+perl ../../vcf2fastas.pl --vcf ../NA2-JPN.4D.snps.min_isolates.1lab.vcf
+cat *fa > NA2-JPN.4D.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+#calculate proportions
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../NA2.txt --minA 13 --minB 4 --fasta NA1-NA2.4D.snps.min_isolates.nuclear.1lab.fasta --out NA1-NA2.4D.snps.min_sites_isolates.nuclear --mode detailed
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../JPN.txt --minA 13 --minB 2 --fasta NA1-JPN.4D.snps.min_isolates.nuclear.1lab.fasta --out NA1-JPN.4D.snps.min_sites_isolates.nuclear --mode detailed
+perl ../../polymorphism_proportions.pl --clade1 ../../NA2.txt --clade2 ../../JPN.txt --minA 4 --minB 2 --fasta NA2-JPN.4D.snps.min_isolates.nuclear.1lab.fasta --out NA2-JPN.4D.snps.min_sites_isolates.nuclear --mode detailed
+
+#for NE
+#convert SNPs VCF to FASTA 
+perl ../../vcf2fastas.pl --vcf ../NA1-NA2.NE.snps.min_isolates.1lab.vcf
+cat *fa > NA1-NA2.NE.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+perl ../../vcf2fastas.pl --vcf ../NA1-JPN.NE.snps.min_isolates.1lab.vcf
+cat *fa > NA1-JPN.NE.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+perl ../../vcf2fastas.pl --vcf ../NA2-JPN.NE.snps.min_isolates.1lab.vcf
+cat *fa > NA2-JPN.NE.snps.min_isolates.nuclear.1lab.fasta
+rm *fa
+
+#calculate proportions
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../NA2.txt --minA 13 --minB 4 --fasta NA1-NA2.NE.snps.min_isolates.nuclear.1lab.fasta --out NA1-NA2.NE.snps.min_sites_isolates.nuclear --mode detailed
+perl ../../polymorphism_proportions.pl --clade1 ../../NA1.1lab.txt --clade2 ../../JPN.txt --minA 13 --minB 2 --fasta NA1-JPN.NE.snps.min_isolates.nuclear.1lab.fasta --out NA1-JPN.NE.snps.min_sites_isolates.nuclear --mode detailed
+perl ../../polymorphism_proportions.pl --clade1 ../../NA2.txt --clade2 ../../JPN.txt --minA 4 --minB 2 --fasta NA2-JPN.NE.snps.min_isolates.nuclear.1lab.fasta --out NA2-JPN.NE.snps.min_sites_isolates.nuclear --mode detailed
