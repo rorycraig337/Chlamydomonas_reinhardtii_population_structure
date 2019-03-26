@@ -1,8 +1,0 @@
-##calculate genetic distance to REF for each isolates
-#create all sites fasta including REF to calculate genome-wide genetic distance
-perl vcf2fastas_ref.pl --vcf ../../SNP_filtering/species_wide/all_sites.all_isolates.nuclear.vcf
-cat *fa > all_sites.all_isolates.REF.nuclear.fasta
-rm *fa
-
-#create paireise distance matrix
-megacc -a TN_pairwise_distance.mao -d all_sites.all_isolates.REF.nuclear.fasta
