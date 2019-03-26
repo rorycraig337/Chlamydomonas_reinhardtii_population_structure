@@ -1,0 +1,5 @@
+perl vcf2fineSTRUCTURE.pl --vcf ../../SNP_filtering/species_wide/snps.all_isolates.nuclear.vcf --chr chr_list.txt --suffix phase
+perl phase2rec.pl --chr chr_list.txt --rate 0.00000012 --suffix rec
+~/software/fs-2.1.3/fs default.cp -n -phasefiles chromosome_{1..17}.phase -recombfiles chromosome_{1..17}.rec -idfile iso_POP.ids -ploidy 1 -numthreads 17 -go 
+
+
