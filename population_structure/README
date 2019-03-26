@@ -1,0 +1,45 @@
+##subsample VCF for 4D and NE sites, and create files for STRUCTURE, PCA and neighbour joining analyses
+
+#create subsampled VCFs for 4D and NE
+bedtools intersect -a ../SNP_filtering/species_wide/snps.all_isolates.nuclear.vcf -b ../site_classes/4D.bed -header > 4D.snps.all_isolates.nuclear.vcf
+bedtools intersect -a ../SNP_filtering/species_wide/snps.all_isolates.nuclear.vcf -b ../site_classes/NE.bed -header > NE.snps.all_isolates.nuclear.vcf
+
+#create files for 4D
+python vcf2structure.py 4D.snps.all_isolates.nuclear.vcf > 4D.snps_20kb.txt
+sed -i '$ d' 4D.snps_20kb.txt
+sed 's/\[//g' 4D.snps_20kb.txt | sed 's/\]//g' | sed 's/\,//g' | sed "s/'//g" > 4D.snps_20kb.NJ.txt
+mv 4D.snps.all_isolates.nuclear.structure.inp 4D.snps_20kb.structure.txt
+sed -i '1d' 4D.snps_20kb.structure.txt
+perl structure2vcf.pl --structure 4D.snps_20kb.NJ.txt --vcf 4D.snps.all_isolates.nuclear.vcf --out 4D.snps_20kb.vcf
+perl ../SNP_filtering/vcf_isolate_filter.pl --in 4D.snps_20kb.vcf --exclude ../SNP_filtering/species_wide/CC1009.txt --out 4D.snps_20kb.1lab.vcf
+
+#create files for NE
+python vcf2structure.py NE.snps.all_isolates.nuclear.vcf > NE.snps_20kb.txt
+sed -i '$ d' NE.snps_20kb.txt
+sed 's/\[//g' NE.snps_20kb.txt | sed 's/\]//g' | sed 's/\,//g' | sed "s/'//g" > NE.snps_20kb.NJ.txt
+mv NE.snps.all_isolates.nuclear.structure.inp NE.snps_20kb.structure.txt
+sed -i '1d' NE.snps_20kb.structure.txt
+perl structure2vcf.pl --structure NE.snps_20kb.NJ.txt --vcf NE.snps.all_isolates.nuclear.vcf --out NE.snps_20kb.vcf
+perl ../SNP_filtering/vcf_isolate_filter.pl --in NE.snps_20kb.vcf --exclude ../SNP_filtering/species_wide/CC1009.txt --out NE.snps_20kb.1lab.vcf
+
+#create all SNP fasta files for 4D and NE
+perl ../differentiation_divergence_analyses/vcf2fastas.pl --vcf 4D.snps.all_isolates.nuclear.vcf
+cat *fa > 4D.snps.all_isolates.nuclear.fasta
+rm *fa
+
+perl ../differentiation_divergence_analyses/vcf2fastas.pl --vcf NE.snps.all_isolates.nuclear.vcf
+cat *fa > NE.snps.all_isolates.nuclear.fasta
+rm *fa
+
+#create all site fasta files for 4D and NE
+bedtools intersect -a ../SNP_filtering/species_wide/all_sites.all_isolates.nuclear.vcf -b ../site_classes/4D.bed -header > 4D.all_sites.all_isolates.nuclear.vcf
+bedtools intersect -a ../SNP_filtering/species_wide/all_sites.all_isolates.nuclear.vcf -b ../site_classes/NE.bed -header > NE.all_sites.all_isolates.nuclear.vcf
+
+#create all sites fastas for 4D and NE, for NJ analysis
+perl ../differentiation_divergence_analyses/vcf2fastas.pl --vcf 4D.all_sites.all_isolates.nuclear.vcf
+cat *fa > 4D.all_sites.all_isolates.nuclear.fasta
+rm *fa
+
+perl ../differentiation_divergence_analyses/vcf2fastas.pl --vcf NE.all_sites.all_isolates.nuclear.vcf
+cat *fa > NE.all_sites.all_isolates.nuclear.fasta
+rm *fa
