@@ -1,0 +1,3 @@
+##infer neighbour_joining tree
+
+megacc -a TN_NJ.mao -d ../4D.all_sites.all_isolates.nuclear.fasta
