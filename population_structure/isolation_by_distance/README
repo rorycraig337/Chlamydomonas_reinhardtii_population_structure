@@ -1,0 +1,16 @@
+##Mantel tests for isolation by distance for NA1 and NA2
+
+#exclude JPN and CC1009
+~/software/kentUtils/bin/linux.x86_64/faSomeRecords -exclude ../4D.all_sites.all_isolates.nuclear.fasta exclude.txt 4D.all_sites.NA.nuclear.1lab.fasta
+
+#get genetic distance
+megacc -a ../../VCF_parse/REF_distance/TN_pairwise_distance.mao -d 4D.all_sites.NA.nuclear.1lab.fasta
+
+#make files for Mantel tests
+tail -n36 4D.all_sites.NA.nuclear.1lab-11089.meg | head -n35 > 4D.all_sites.nuclear.matrix
+perl matrix_converter.plot.pl --matrix 4D.all_sites.nuclear.matrix --isolates NA.txt --distances distances_km.tsv --out 4D.all_sites.nuclear.matrix.R1.csv
+perl matrix_converter.mantel.pl --matrix 4D.all_sites.nuclear.matrix --isolates NA.txt --distances distances_km.tsv --out 4D.all_sites.nuclear.matrix.R2.csv
+
+grep -P "\"1,1\"" 4D.all_sites.nuclear.matrix.R1.csv > NA2.4D.R.csv
+grep -P "\"0,0\"" 4D.all_sites.nuclear.matrix.R1.csv > NA1.4D.R.csv
+grep -P "\"0,1\"" 4D.all_sites.nuclear.matrix.R1.csv > between.4D.R.csv
